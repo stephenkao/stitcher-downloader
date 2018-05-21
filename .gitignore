@@ -1,0 +1,13 @@
+.DS_Store
+
+yarn-error.log
+
+credentials.json
+episodes.json
+*-episodes-*.json
+
+cypress/plugins/
+cypress/support/
+cypress/videos/
+node_modules/
+downloads/

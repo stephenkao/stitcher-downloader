@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "cypress": "^2.1.0",
+    "node-wget-promise": "^0.1.4"
+  },
+  "scripts": {
+    "download": "node index.js",
+    "geturls": "yarn run cypress run -s ./cypress/integration/geturls_spec.js"
+  },
+  "name": "stitcher-downloader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:stephenkao/stitcher-downloader.git",
+  "author": "stephenkao <stephen.yuchen.kao@gmail.com>",
+  "license": "MIT",
+  "private": false
+}
