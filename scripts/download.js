@@ -52,9 +52,6 @@ function downloadFiles(filesList, onDone) {
 }
 
 function getFeedDetails(feedId, seasonId, onDone) {
-  feedId = '144988';
-  seasonId = '830';
-
   const url = `https://app.stitcher.com/Service/GetFeedDetailsWithEpisodes.php?fid=${feedId}&id_Season=${seasonId}`;
   const req = request(url, (error, res, body) => {
     parseStringPromise(body).then((parsedBody) => {
@@ -93,7 +90,7 @@ function main() {
     }
   });
 
-  getFeedDetails(cli.flags.feed, cli.flags.season, (feedDetails) => {
+
     downloadFiles(feedDetails, () => {
       console.log('done');
     });
