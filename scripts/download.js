@@ -1,22 +1,22 @@
 const fs = require('fs')
+const path = require('path');
 const meow = require('meow');
 const request = require('request');
 const ProgressBar = require('progress');
 const { parseStringPromise } = require('xml2js');
+const mkdirp = require('mkdirp');
 
+const BASE_DIR = './downloads';
 const BASE_FEED_URL = 'https://app.stitcher.com/Service/GetFeedDetailsWithEpisodes.php';
-const BASE_DEST = './tmp';
 
 
-// https://app.stitcher.com/Service/GetFeedDetailsWithEpisodes.php?fid=144988&id_Season=837
-
-function downloadFile(url, title, cb) {
+function downloadFile(url, title, destDir, cb) {
   const file = request(url);
   let bar;
 
   file.on('response', (res) => {
     const len = parseInt(res.headers['content-length'], 10);
-    console.log(title);
+    console.log(`Downloading ${title}`);
     bar = new ProgressBar('  Downloading [:bar] :rate/bps :percent :etas', {
       complete: '=',
       incomplete: ' ',
@@ -38,20 +38,25 @@ function downloadFile(url, title, cb) {
     });
   });
 
-  file.pipe(fs.createWriteStream(`./downloads/${title}`));
+  file.pipe(fs.createWriteStream(path.join(destDir, title)));
 }
 
-function downloadFiles(filesList, onDone) {
+function downloadFiles(filesList, destDir, onDone) {
   if (filesList.length < 1) {
     onDone();
     return;
   }
 
   const [url, title] = filesList.shift();
-  downloadFile(url, title, () => downloadFiles(filesList, () => console.log('done!')));
+  downloadFile(url, title, destDir, () => {
+    downloadFiles(filesList, destDir, () => console.log('done!'));
+  });
 }
 
 function getFeedDetails(feedId, seasonId, onDone) {
+  // THROWING SHADE WHAT WHAT!!!!
+  // https://app.stitcher.com/Service/GetFeedDetailsWithEpisodes.php?fid=144988&id_Season=837
+
   const url = `https://app.stitcher.com/Service/GetFeedDetailsWithEpisodes.php?fid=${feedId}&id_Season=${seasonId}`;
   const req = request(url, (error, res, body) => {
     parseStringPromise(body).then((parsedBody) => {
@@ -70,9 +75,15 @@ function getFeedDetails(feedId, seasonId, onDone) {
 }
 
 function main() {
-  const cli = meow(`
+  const {
+    flags: {
+      feed: feedId,
+      season: seasonId
+    },
+    input
+  } = meow(`
     Usage
-      $ node download.js --feed <feed_id> --season <season_id>
+      $ node download.js --feed <feed_id> --season <season_id> <destination>
 
     Options
       --feed, -f     feed id
@@ -81,18 +92,21 @@ function main() {
     flags: {
       feed: {
         alias: 'f',
-        type: 'number'
+        type: 'string'
       },
       season: {
         alias: 's',
-        type: 'number'
+        type: 'string'
       }
     }
   });
 
-
-    downloadFiles(feedDetails, () => {
-      console.log('done');
+  const destDir = path.join(input[0] || BASE_DIR, feedId, seasonId);
+  mkdirp(destDir, () => {
+    getFeedDetails(feedId, seasonId, (feedDetails) => {
+      downloadFiles(feedDetails, destDir, () => {
+        console.log('done');
+      });
     });
   });
 }
